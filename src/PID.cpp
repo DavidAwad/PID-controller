@@ -39,6 +39,9 @@ void PID::UpdateError(double cte) {
   total_cte += cte;
   // update the previous error pointer
   prev_cte = cte;
+
+  std::cout << "Prev: " << prev_cte << "Curr: " << cte << "Total: " << total_cte << std::endl;
+
 }
 
 double PID::TotalError() {

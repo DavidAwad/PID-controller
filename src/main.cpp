@@ -34,8 +34,8 @@ int main()
 
   PID pid;
   // TODO: Initialize the pid class.
-  const double tau_p = 0.01;
-  const double tau_i = 0.05;
+  const double tau_p = 0.0;
+  const double tau_i = 1.0;
   const double tau_d = 3.0;
 
   pid.Init(tau_p, tau_i, tau_d);
@@ -62,6 +62,7 @@ int main()
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
+          // twiddle
 
           pid.UpdateError(cte);
           steer_value = pid.TotalError();
