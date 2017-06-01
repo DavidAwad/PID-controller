@@ -34,13 +34,17 @@ int main()
 
   PID pid;
   // TODO: Initialize the pid class.
-  const double tau_p = 0.0;
-  const double tau_i = 1.0;
+  const double tau_p = 0.20;
+  const double tau_i = 0.004;
   const double tau_d = 3.0;
 
   pid.Init(tau_p, tau_i, tau_d);
 
-  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  double prev_time = 0.0;
+  double curr_time = 0.0;
+  double dt        = 0.0;
+
+  h.onMessage([&pid, &prev_time, &curr_time, &dt](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -52,30 +56,36 @@ int main()
         std::string event = j[0].get<std::string>();
         if (event == "telemetry") {
           // j[1] is the data JSON object
+
           double cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
           double steer_value;
+
           /*
-          * TODO: Calcuate steering value here, remember the steering value is
-          * [-1, 1].
+          * TODO: Calcuate steering value here, remember the steering value is [-1, 1].
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
+          *
+          * TODO implement twiddle parameter optimization
           */
-          // twiddle
+          // take the current time and subtract it from the previous timestep
+          curr_time = clock();
+          dt = (curr_time - prev_time)/CLOCKS_PER_SEC;
+          prev_time = curr_time;
 
-          pid.UpdateError(cte);
+          // NOTE: POSIX sets clocks_per_sec to 1 million, which limits the
+          // precision of this to 1 microsecond. I think this is just a
+          // historical value from days where the maximum CPU
+          // frequencies were measured in Mega Hertz.
+          pid.UpdateError(cte, dt);
           steer_value = pid.TotalError();
 
-          if (steer_value > 1) {
-            steer_value = 1;
-          }
-          else if (steer_value < -1) {
-            steer_value = -1;
-          }
+          steer_value = steer_value < -1 ? -1: steer_value;
+          steer_value = steer_value >  1 ?  1: steer_value;
 
           // DEBUG
-          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
+          // std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
@@ -117,7 +127,7 @@ int main()
   });
 
   int port = 4567;
-  if (h.listen(port))
+  if (h.listen("0.0.0.0", port)) // TODO take a look at 0.0.0.0 host listening
   {
     std::cout << "Listening to port " << port << std::endl;
   }
