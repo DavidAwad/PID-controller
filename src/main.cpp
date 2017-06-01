@@ -36,7 +36,7 @@ int main()
   // TODO: Initialize the pid class.
   const double tau_p = 0.20;
   const double tau_i = 0.004;
-  const double tau_d = 3.0;
+  const double tau_d = 0.30;
 
   pid.Init(tau_p, tau_i, tau_d);
 
